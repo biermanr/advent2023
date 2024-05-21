@@ -1,4 +1,5 @@
 use std::fs;
+use regex::Regex;
 
 const MAX_RED: u16 = 12;
 const MAX_GREEN: u16 = 13;
@@ -62,4 +63,40 @@ pub fn run_part1(data: &str) {
         }
     }
     println!("{}", ret);
+}
+
+/// Day 2 problem 2
+///
+/// Description:
+/// Same problem, but using regex instead of trying to only
+/// go through the line once and it is SO MUCH EASIER!
+/// The goal is to determine the minimum number of balls of each
+/// color needed for each game, which is just the max.
+pub fn run_part2(data: &str) {
+    let mut ret = 0;
+
+    let re_red = Regex::new(r"(\d+) red").unwrap();
+    let re_green = Regex::new(r"(\d+) green").unwrap();
+    let re_blue = Regex::new(r"(\d+) blue").unwrap();
+
+    for line in fs::read_to_string(data).unwrap().lines(){
+        let mut max_red = 0;
+        let mut max_green = 0;
+        let mut max_blue = 0;
+
+        for (_, [j]) in re_red.captures_iter(line).map(|c| c.extract()){
+            let val = j.parse().unwrap();
+            if val > max_red { max_red = val };
+        }
+        for (_, [j]) in re_green.captures_iter(line).map(|c| c.extract()){
+            let val = j.parse().unwrap();
+            if val > max_green { max_green = val };
+        }
+        for (_, [j]) in re_blue.captures_iter(line).map(|c| c.extract()){
+            let val = j.parse().unwrap();
+            if val > max_blue { max_blue = val };
+        }
+        ret += max_red*max_green*max_blue;
+    }
+    println!("{}",ret);
 }
