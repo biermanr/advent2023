@@ -51,9 +51,8 @@ pub fn run_part2(data: &str) {
         let l: Vec<u32> = line.chars().filter_map(|c| c.to_digit(10)).collect();
 
         let str_num = format!("{}{}", l.first().unwrap(), l.last().unwrap());
-        let num = 10 * str_num;
+        let num = str_num.parse::<u32>().unwrap();
         s += num;
     }
     println!("{}", s);
-    println!("{}", data);
 }
