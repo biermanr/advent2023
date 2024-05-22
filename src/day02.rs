@@ -80,22 +80,24 @@ pub fn run_part2(data: &str) {
     let re_blue = Regex::new(r"(\d+) blue").unwrap();
 
     for line in fs::read_to_string(data).unwrap().lines(){
-        let mut max_red = 0;
-        let mut max_green = 0;
-        let mut max_blue = 0;
+        let max_red:usize = re_red
+            .captures_iter(line)
+            .map(|c| c.extract())
+            .map(|(_,[v])| v.parse().unwrap())
+            .max().unwrap();
+        
+        let max_green:usize = re_green
+            .captures_iter(line)
+            .map(|c| c.extract())
+            .map(|(_,[v])| v.parse().unwrap())
+            .max().unwrap();
 
-        for (_, [j]) in re_red.captures_iter(line).map(|c| c.extract()){
-            let val = j.parse().unwrap();
-            if val > max_red { max_red = val };
-        }
-        for (_, [j]) in re_green.captures_iter(line).map(|c| c.extract()){
-            let val = j.parse().unwrap();
-            if val > max_green { max_green = val };
-        }
-        for (_, [j]) in re_blue.captures_iter(line).map(|c| c.extract()){
-            let val = j.parse().unwrap();
-            if val > max_blue { max_blue = val };
-        }
+        let max_blue:usize = re_blue
+            .captures_iter(line)
+            .map(|c| c.extract())
+            .map(|(_,[v])| v.parse().unwrap())
+            .max().unwrap();
+
         ret += max_red*max_green*max_blue;
     }
     println!("{}",ret);
