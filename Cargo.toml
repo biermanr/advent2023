@@ -9,5 +9,6 @@ name = "advent2023"
 crate-type = ["cdylib"]
 
 [dependencies]
+itertools = "0.13.0"
 pyo3 = "0.20.0"
 regex = "1.10.4"
