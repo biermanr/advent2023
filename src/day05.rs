@@ -82,7 +82,72 @@ pub fn run_part1(data: &str) {
     println!("{:?}",seeds.iter().min().unwrap());
 }
 
-///Day 5 part 2
+fn apply_map_range(source_values: &Vec<(usize,usize)>, m: &Vec<(usize,usize,usize)>) -> Vec<(usize,usize)> {
+    let mut dest_ranges:Vec<(usize,usize)> = Vec::new();
+    for (s_start,s_span) in source_values {
+        let mut s_start = *s_start;
+        let s_end = s_start+s_span;
+
+        for (m_start,d,r) in m {
+            let m_start = *m_start;
+            let m_end = m_start+r;
+           
+            //if the start of the next region is too large
+            //then no point in checking further regions
+            //SOURCE:       ----------
+            //   MAP:                   -------- 
+            if s_end < m_start {
+                dest_ranges.push((s_start,*s_span));
+                s_start = s_end;
+                break;
+            }
+
+            //if the source start is greater than the map end
+            //then move on to the next map
+            //SOURCE:                ----------
+            //   MAP:      -------- 
+            if s_start > m_end {
+                continue;
+            }
+
+            //case when overlap with "dangling" left-side source
+            //might continue past the end of the map region
+            //SOURCE:      ---------????
+            //   MAP:          -------- 
+            if s_start < m_start {
+                dest_ranges.push((s_start,m_start-s_start));
+                s_start = m_start;
+            }
+
+            //case when source end is within the map end
+            //after doing the mapping don't have to check
+            //the next mapping region since it will be too large
+            //SOURCE:          ----
+            //   MAP:          -------- 
+            if s_end < m_end {
+                dest_ranges.push((d+(s_start-m_start),s_end-s_start));
+                s_start = s_end;
+                break;
+            }
+            
+            //only way to end up here is if source continues
+            //past the end of the map
+            //SOURCE:          ???--------
+            //   MAP:          --------
+            dest_ranges.push((d+(s_start-m_start),m_end-s_start));
+            s_start = m_end;
+        }
+
+        //have to check final case if SOURCE is larger than all maps
+        //which I'm denoting with s_start < s_end
+        if s_start < s_end {
+            dest_ranges.push((s_start,s_end-s_start));
+        }
+    }
+    dest_ranges
+}
+
+///Day 5 problem 2
 pub fn run_part2(data: &str) {
     //I don't know why I need this binding, something about borrowing
     let binding = fs::read_to_string(data).unwrap();
@@ -90,16 +155,12 @@ pub fn run_part2(data: &str) {
 
     //First line is now pairs of ranges of seeds
     let seeds_line = lines.next().unwrap();
-    let seeds: Vec<usize> = seeds_line
+    let mut seeds: Vec<(usize,usize)> = seeds_line
         .split(' ')
         .filter_map(|t| t.parse::<usize>().ok())
-        .collect();
-
-    //Brute force approach of expanding the seed range
-    let mut seeds: Vec<usize> = seeds
+        .collect::<Vec<usize>>()
         .chunks(2)
-        .map(|x| x[0]..x[0]+x[1])
-        .flatten()
+        .map(|x| (x[0],x[1]))
         .collect();
 
     //Next line will be empty, skip it
@@ -131,6 +192,7 @@ pub fn run_part2(data: &str) {
 
             m.push((s,d,r));
         }
+        m.sort_by(|a,b| (a.0).cmp(&b.0));
         maps.insert((dest,source), m);
     }
 
@@ -150,7 +212,7 @@ pub fn run_part2(data: &str) {
 
     //Apply all the maps in the correct order
     for (s,d) in map_order {
-        seeds = apply_map(&seeds, &maps[&(*s,*d)]);
+        seeds = apply_map_range(&seeds, &maps[&(*s,*d)]);
     }
     println!("{:?}",seeds.iter().min().unwrap());
 }
