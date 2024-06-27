@@ -6,6 +6,9 @@ mod day02;
 mod day03;
 mod day04;
 mod day05;
+mod day06;
+mod day07;
+mod day08;
 
 #[pyfunction]
 fn run_day_part(day: u8, part: u8, data: &str) {
@@ -20,6 +23,12 @@ fn run_day_part(day: u8, part: u8, data: &str) {
         (4, 2) => day04::run_part2(data),
         (5, 1) => day05::run_part1(data),
         (5, 2) => day05::run_part2(data),
+        (6, 1) => day06::run_part1(data),
+        (6, 2) => day06::run_part2(data),
+        (7, 1) => day07::run_part1(data),
+        (7, 2) => day07::run_part2(data),
+        (8, 1) => day08::run_part1(data),
+        (8, 2) => day08::run_part2(data),
         _ => println!("Need to specify day/part number"),
     }
 }
