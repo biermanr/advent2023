@@ -16,5 +16,6 @@ import advent2023
 #advent2023.run_day_part(7,1,'data/day07_part1_test.txt')
 #advent2023.run_day_part(7,2,'data/day07_part1_test.txt')
 #advent2023.run_day_part(8,1,'data/day08.txt')
-advent2023.run_day_part(8,2,'data/day08.txt')
+#advent2023.run_day_part(8,2,'data/day08.txt')
+advent2023.run_day_part(10,1,'data/day10.txt')
 """
