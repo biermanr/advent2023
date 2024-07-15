@@ -1,4 +1,5 @@
 use std::fs;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 struct Pos {
@@ -73,7 +74,7 @@ impl Maze {
         }
     }
 
-    fn get_start_adjacent_squares(self: &Self) -> (Pos, Pos) {
+    fn get_start_adjacent_squares(self: &mut Self) -> (Pos, Pos) {
 
         //find the 2 tiles out of all 4 surrounding S that connect
         let mut connection_squares = Vec::new();
@@ -86,22 +87,36 @@ impl Maze {
         let u: isize = (self.start.y-1) as isize;
         let d: isize = (self.start.y+1) as isize;
 
-        //check square above
-        if "|7F".contains(self.tile(x,u)){
+        let above = "|7F".contains(self.tile(x,u));
+        let below = "|JL".contains(self.tile(x,d));
+        let left  = "-LF".contains(self.tile(l,y));
+        let right = "-7J".contains(self.tile(r,y));
+
+        if above && below {
+            self.grid[self.start.y][self.start.x] = '|';
             connection_squares.push( Pos{ x: self.start.x, y: self.start.y-1 });
-        }
-        //check square below
-        if "|JL".contains(self.tile(x,d)){
             connection_squares.push( Pos{ x: self.start.x, y: self.start.y+1 });
-        }
-        //check square left
-        if "-LF".contains(self.tile(l,y)){
+        } else if above && left {
+            self.grid[self.start.y][self.start.x] = 'J';
+            connection_squares.push( Pos{ x: self.start.x, y: self.start.y-1 });
             connection_squares.push( Pos{ x: self.start.x-1, y: self.start.y });
-        }
-        //check square right
-        if "-7J".contains(self.tile(r,y)){
+        } else if above && right {
+            self.grid[self.start.y][self.start.x] = 'L';
+            connection_squares.push( Pos{ x: self.start.x, y: self.start.y-1 });
             connection_squares.push( Pos{ x: self.start.x+1, y: self.start.y });
-        }
+        } else if below && left {
+            self.grid[self.start.y][self.start.x] = '7';
+            connection_squares.push( Pos{ x: self.start.x, y: self.start.y+1 });
+            connection_squares.push( Pos{ x: self.start.x-1, y: self.start.y });
+        } else if below && right {
+            self.grid[self.start.y][self.start.x] = 'F';
+            connection_squares.push( Pos{ x: self.start.x, y: self.start.y+1 });
+            connection_squares.push( Pos{ x: self.start.x+1, y: self.start.y });
+        } else if left && right {
+            self.grid[self.start.y][self.start.x] = '-';
+            connection_squares.push( Pos{ x: self.start.x-1, y: self.start.y });
+            connection_squares.push( Pos{ x: self.start.x+1, y: self.start.y });
+        } 
 
         //edge case where there aren't any connecting squares
         if connection_squares.len() == 0 {
@@ -114,7 +129,7 @@ impl Maze {
         return (c1,c2);
     }
 
-    fn furthest_end(self: &Self) -> usize {
+    fn furthest_end(self: &mut Self) -> usize {
 
         let (mut c1, mut c2) = self.get_start_adjacent_squares();
 
@@ -140,20 +155,31 @@ impl Maze {
         return steps;
     }
 
-    fn mark_loop(self: &Self) -> Maze {
+    fn mark_loop(self: &mut Self) -> Maze {
+        //making the maze prettier following Henry's code
+        let maze_piece = HashMap::from([
+            ('-','-'),
+            ('|','|'),
+            ('J','╯'),
+            ('L','╰'),
+            ('L','╰'),
+            ('7','╮'),
+            ('F','╭'),
+        ]);
+
         let (mut c1, mut c2) = self.get_start_adjacent_squares();
 
         let mut prev_c1 = Pos { x: self.start.x, y: self.start.y};
         let mut prev_c2 = Pos { x: self.start.x, y: self.start.y};
 
-        let mut marked_grid = vec![vec!['0'; self.ncol]; self.nrow];
+        let mut marked_grid = vec![vec!['.'; self.ncol]; self.nrow];
 
-        marked_grid[self.start.y][self.start.x] = '1';
+        marked_grid[self.start.y][self.start.x] = maze_piece[&self.grid[self.start.y][self.start.x]];
 
         //walk both branches until they collide
         loop {
-            marked_grid[c1.y][c1.x] = '1';
-            marked_grid[c2.y][c2.x] = '1';
+            marked_grid[c1.y][c1.x] = maze_piece[&self.grid[c1.y][c1.x]];
+            marked_grid[c2.y][c2.x] = maze_piece[&self.grid[c2.y][c2.x]];
 
             if c1.x == c2.x && c1.y == c2.y { break; }
 
@@ -174,33 +200,41 @@ impl Maze {
         }
     }
 
-    fn internal_tiles(self: &Self) -> usize {
+    fn internal_tiles(self: &mut Self) -> usize {
         let mut num_internal = 0;
 
         for y in 0..self.grid.len() {
             for x in 0..self.grid[y].len() {
-                if self.grid[y][x] == '1' { continue };
+                if self.grid[y][x] != '.' { continue };
 
-                //count how many loop tiles are between here
-                //and the right boundary of the grid
-                let mut num_intersections_right = 0;
-                for c in x..self.grid[y].len() {
-                    if self.grid[y][c] == '1' {
-                        num_intersections_right += 1;
-                    }
-                }
 
                 //count how many loop tiles are between here
                 //and the left boundary of the grid
-                let mut num_intersections_left = 0;
+                let mut num_intersections = 0;
+                let mut prev_corner = '.';
                 for c in 0..x {
-                    if self.grid[y][c] == '1' {
-                        num_intersections_left += 1;
+                    if self.grid[y][c] == '|' {
+                        num_intersections += 1;
+                    } else if self.grid[y][c] == '╭' {
+                        prev_corner = '╭';
+                    } else if self.grid[y][c] == '╯' && prev_corner == '╭' {
+                        num_intersections += 1;
+                        prev_corner = '.';
+                    } else if self.grid[y][c] == '╮' && prev_corner == '╭' {
+                        prev_corner = '.';
+                    } else if self.grid[y][c] == '╰' {
+                        prev_corner = '╰';
+                    } else if self.grid[y][c] == '╮' && prev_corner == '╰' {
+                        num_intersections += 1;
+                        prev_corner = '.';
+                    } else if self.grid[y][c] == '╯' && prev_corner == '╰' {
+                        prev_corner = '.';
                     }
+
                 }
 
-                if (num_intersections_right % 2 == 1) && (num_intersections_left % 2 == 1) {
-                    println!("{x},{y}");
+                if num_intersections % 2 == 1 {
+                    self.grid[y][x] = '*';
                     num_internal += 1;
                 }
             }
@@ -209,6 +243,14 @@ impl Maze {
         num_internal
     }
 
+    fn print_grid(self: &Self) {
+        for y in 0..self.grid.len() {
+            for x in 0..self.grid[y].len() {
+                print!("{}",self.grid[y][x]);
+            }
+            println!("");
+        }
+    }
 }
 
 /// Day 10 problem 1
@@ -217,7 +259,7 @@ pub fn run_part1(data: &str) {
     let binding = fs::read_to_string(data).unwrap();
     let lines = binding.lines();
 
-    let maze = Maze::new(lines);
+    let mut maze = Maze::new(lines);
     let steps = maze.furthest_end();
     println!("{:?}",steps);
 }
@@ -232,11 +274,14 @@ pub fn run_part2(data: &str) {
     //create a new maze board where
     //all tiles that are part of the loop
     //are 1, otherwise 0.
-    let maze = Maze::new(lines);
-    let maze = maze.mark_loop();
+    let mut maze = Maze::new(lines);
+    maze.get_start_adjacent_squares();
+
+    let mut maze = maze.mark_loop();
+    let num_internal = maze.internal_tiles();
+    maze.print_grid();
 
     //count internal tiles
-    let num_internal = maze.internal_tiles();
     println!("{:?}",num_internal);
 }
 
