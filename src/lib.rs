@@ -31,6 +31,7 @@ fn run_day_part(day: u8, part: u8, data: &str) {
         (8, 1) => day08::run_part1(data),
         (8, 2) => day08::run_part2(data),
         (10, 1) => day10::run_part1(data),
+        (10, 2) => day10::run_part2(data),
         _ => println!("Need to specify day/part number"),
     }
 }
