@@ -89,7 +89,7 @@ pub fn run_part2(data: &str) {
     println!("{:?}",dist_sum);
 }
 
-fn print_grid(grid: &Vec<Vec<char>>) {
+fn _print_grid(grid: &Vec<Vec<char>>) {
     for y in 0..grid.len() {
         for x in 0..grid[y].len() {
             print!("{}",grid[y][x]);
